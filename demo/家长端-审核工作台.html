@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>纸间流光 AuraLog - 审核工作台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bg-warm': '#FFF9F0', 'card-cream': '#FEFDFB',
+                        'caramel': '#D97706', 'caramel-light': '#FED7AA',
+                        'sage': '#84CC16', 'sage-light': '#ECFCCB',
+                        'coffee': '#78350F', 'text-main': '#44403C',
+                        'text-secondary': '#78716C', 'text-light': '#A8A29E',
+                        'border-warm': '#F5E9D4',
+                    },
+                    fontFamily: { 
+                        'sans': ['Noto Sans SC', 'sans-serif'],
+                        'serif': ['Noto Serif SC', 'serif'] 
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { 
+            font-family: 'Noto Sans SC', sans-serif; 
+            background-color: #FFF9F0; color: #44403C; font-size: 14px;
+            position: relative;
+        }
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E");
+            opacity: 0.03; pointer-events: none; z-index: 9999;
+        }
+        .card { background: #FEFDFB; border-radius: 0.75rem; border: 1px solid #F5E9D4; box-shadow: 0 4px 6px -1px rgba(120, 53, 15, 0.05); }
+        .btn-caramel { background: #D97706; color: #fff; transition: all 0.15s; font-weight: 500; }
+        .btn-caramel:hover { background: #B45309; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3); }
+        .btn-sage { background: #84CC16; color: #fff; transition: all 0.15s; font-weight: 500; }
+        .btn-sage:hover { background: #65A30D; }
+        .btn-ghost-warm { background: transparent; color: #78716C; border: 1px solid #F5E9D4; transition: all 0.15s; }
+        .btn-ghost-warm:hover { background: #FFF7ED; border-color: #D97706; color: #D97706; }
+        
+        .washi-tape { position: absolute; top: -8px; left: 20px; width: 80px; height: 16px; background: rgba(217, 119, 6, 0.15); transform: rotate(-2deg); border-left: 2px dashed rgba(217, 119, 6, 0.1); border-right: 2px dashed rgba(217, 119, 6, 0.1); }
+
+        .tag { font-size: 0.65rem; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-weight: 500; border: 1px solid transparent; }
+
+        /* 隐藏横向滚动条 */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 星级评分按钮 */
+        .star-btn { color: #D1D5DB; transition: color 0.15s; }
+        .star-btn.active { color: #F59E0B; }
+    </style>
+</head>
+<body class="p-4 md:p-6">
+
+    <!-- 顶栏 -->
+    <header class="max-w-7xl mx-auto flex justify-between items-center mb-4 pb-4 border-b border-border-warm">
+        <div class="flex items-center space-x-3">
+            <a href="#" class="text-text-light hover:text-caramel">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </a>
+            <div>
+                <h1 class="text-base font-bold text-coffee font-serif">审核工作台</h1>
+                <p class="text-xs text-text-light">批阅光阴，给予回响。</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2 text-xs text-text-light">
+            <span>待处理：</span>
+            <span class="bg-orange-100 text-orange-600 font-bold px-2 py-0.5 rounded-full">2</span>
+        </div>
+    </header>
+
+    <!-- 待审核任务队列 -->
+    <div class="max-w-7xl mx-auto mb-6">
+        <h3 class="text-sm font-medium text-coffee font-serif mb-2">待办任务队列</h3>
+        <div class="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
+            <!-- 当前选中的任务 -->
+            <div class="flex-shrink-0 w-56 p-3 bg-caramel text-white rounded-lg shadow-md cursor-pointer">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">校内作业</span>
+                    <span class="text-[10px] opacity-80">10:05 提交</span>
+                </div>
+                <h4 class="text-sm font-medium font-serif truncate">寒假语文作业本 P10-P12</h4>
+                <p class="text-[10px] opacity-90 mt-1 flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    2张照片
+                </p>
+            </div>
+            <!-- 其他待办任务 -->
+            <div class="flex-shrink-0 w-56 p-3 bg-card-cream border border-border-warm rounded-lg shadow-sm cursor-pointer hover:border-caramel transition-colors">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded border border-purple-100">积分兑换</span>
+                    <span class="text-[10px] text-text-light">09:30 请求</span>
+                </div>
+                <h4 class="text-sm font-medium text-text-main font-serif truncate">周末看电影</h4>
+                <p class="text-[10px] text-text-light mt-1">消耗 50 流光币</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4">
+        
+        <!-- 左侧主区域：作业详情展示 -->
+        <main class="lg:col-span-2 space-y-4">
+            <div class="card p-5 relative">
+                <div class="washi-tape"></div>
+                
+                <!-- 任务信息 -->
+                <div class="flex justify-between items-start mb-4 mt-1">
+                    <div>
+                        <span class="tag bg-orange-50 text-orange-600 border-orange-100">校内作业</span>
+                        <h2 class="text-lg font-bold text-text-main font-serif mt-1">寒假语文作业本 P10-P12</h2>
+                        <p class="text-xs text-text-light mt-1">实际用时 55m · 提交于 1月4日 10:05</p>
+                    </div>
+                    <button class="btn-ghost-warm px-3 py-1.5 rounded text-xs font-medium flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        下载原图
+                    </button>
+                </div>
+
+                <!-- 照片展示区 (大图) -->
+                <div class="bg-bg-warm rounded-lg p-4 border border-border-warm">
+                    <div class="w-full h-[400px] bg-white rounded shadow-inner flex items-center justify-center overflow-hidden">
+                        <img src="https://placehold.co/600x800/F5E9D4/78350F?text=Chinese+HW+Page+1" class="max-h-full max-w-full object-contain" alt="作业照片1">
+                    </div>
+                    <!-- 缩略图列表 -->
+                    <div class="flex justify-center space-x-2 mt-4">
+                        <div class="w-16 h-20 border-2 border-caramel rounded overflow-hidden cursor-pointer">
+                            <img src="https://placehold.co/100x125/F5E9D4/78350F?text=1" class="w-full h-full object-cover">
+                        </div>
+                        <div class="w-16 h-20 border-2 border-transparent rounded overflow-hidden cursor-pointer opacity-60 hover:opacity-100 transition-opacity">
+                            <img src="https://placehold.co/100x125/D1FAE5/4D7C0F?text=2" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 心得体会展示 -->
+                <div class="mt-5">
+                    <h4 class="text-xs font-medium text-text-light mb-2 flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-caramel" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        彤彤的学习心得
+                    </h4>
+                    <div class="bg-bg-warm/50 p-4 rounded text-sm text-text-secondary leading-relaxed border-l-4 border-caramel/40 pl-4 italic font-serif">
+                        "文言文翻译《愚公移山》太磨人，'之'字用法太多。写完挺有成就感。"
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 右侧侧边栏：审核操作 -->
+        <aside class="space-y-4">
+            <!-- 评价与发币 -->
+            <div class="card p-4 sticky top-4">
+                <h3 class="text-sm font-medium text-coffee font-serif mb-4">填写审核意见</h3>
+                
+                <!-- 星级评分 -->
+                <div class="mb-4">
+                    <label class="text-xs text-text-light block mb-2">完成质量</label>
+                    <div class="flex space-x-1">
+                        <button class="star-btn active"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg></button>
+                        <button class="star-btn active"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg></button>
+                        <button class="star-btn active"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg></button>
+                        <button class="star-btn active"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg></button>
+                        <button class="star-btn"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg></button>
+                    </div>
+                </div>
+
+                <!-- 快捷评语 -->
+                <div class="mb-4">
+                    <label class="text-xs text-text-light block mb-2">快捷评语</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="text-xs px-2 py-1 bg-bg-warm/50 text-text-secondary rounded border border-border-warm hover:border-caramel hover:text-caramel">字迹工整</button>
+                        <button class="text-xs px-2 py-1 bg-caramel/10 text-caramel rounded border border-caramel/30">态度认真</button>
+                        <button class="text-xs px-2 py-1 bg-bg-warm/50 text-text-secondary rounded border border-border-warm hover:border-caramel hover:text-caramel">有进步</button>
+                        <button class="text-xs px-2 py-1 bg-bg-warm/50 text-text-secondary rounded border border-border-warm hover:border-caramel hover:text-caramel">需订正</button>
+                    </div>
+                </div>
+
+                <!-- 详细评语输入 -->
+                <div class="mb-4">
+                    <textarea class="w-full p-2 bg-bg-warm/30 border border-border-warm rounded text-xs text-text-main focus:outline-none focus:border-caramel resize-none" rows="3" placeholder="或输入详细评语...">态度认真，翻译很准确，继续保持！</textarea>
+                </div>
+
+                <!-- 发放流光币 -->
+                <div class="mb-5">
+                    <label class="text-xs text-text-light block mb-2">奖励流光币</label>
+                    <div class="flex items-center space-x-2">
+                        <button class="w-7 h-7 rounded-full bg-bg-warm border border-border-warm text-text-secondary hover:border-caramel hover:text-caramel font-bold">-</button>
+                        <input type="text" value="20" class="w-12 text-center bg-bg-warm/30 border border-border-warm rounded text-sm font-bold text-caramel focus:outline-none focus:border-caramel">
+                        <button class="w-7 h-7 rounded-full bg-bg-warm border border-border-warm text-text-secondary hover:border-caramel hover:text-caramel font-bold">+</button>
+                        <span class="text-[10px] text-text-light ml-2">(余额: 500)</span>
+                    </div>
+                </div>
+
+                <!-- 提交按钮 -->
+                <div class="flex space-x-2">
+                    <button class="flex-1 btn-ghost-warm py-2 rounded text-xs font-medium">退回重做</button>
+                    <button class="flex-1 btn-caramel py-2 rounded text-xs font-medium">确认审核</button>
+                </div>
+            </div>
+
+            <!-- 历史审核记录 -->
+            <div class="card p-4">
+                <h3 class="text-sm font-medium text-coffee font-serif mb-3">最近审核记录</h3>
+                <div class="space-y-3">
+                    <div class="flex items-start space-x-2">
+                        <div class="w-1.5 h-1.5 rounded-full bg-sage mt-1.5"></div>
+                        <div class="flex-1">
+                            <h4 class="text-xs font-medium text-text-main">复习初一生物细胞结构</h4>
+                            <p class="text-[10px] text-text-light mt-0.5">昨日 22:10 · 4星 · +15币</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <div class="w-1.5 h-1.5 rounded-full bg-sage mt-1.5"></div>
+                        <div class="flex-1">
+                            <h4 class="text-xs font-medium text-text-main">英语时文阅读 Week 1</h4>
+                            <p class="text-[10px] text-text-light mt-0.5">昨日 20:30 · 5星 · +20币</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+</body>
+</html>

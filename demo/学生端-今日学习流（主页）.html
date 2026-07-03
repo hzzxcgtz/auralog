@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>纸间流光 AuraLog - 今日学习</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bg-warm': '#FFF9F0', 'card-cream': '#FEFDFB',
+                        'caramel': '#D97706', 'caramel-light': '#FED7AA',
+                        'sage': '#84CC16', 'sage-light': '#ECFCCB',
+                        'coffee': '#78350F', 'text-main': '#44403C',
+                        'text-secondary': '#78716C', 'text-light': '#A8A29E',
+                        'border-warm': '#F5E9D4',
+                    },
+                    fontFamily: { 
+                        'sans': ['Noto Sans SC', 'sans-serif'],
+                        'serif': ['Noto Serif SC', 'serif'] 
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { 
+            font-family: 'Noto Sans SC', sans-serif; 
+            background-color: #FFF9F0; color: #44403C; font-size: 14px;
+            position: relative;
+        }
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E");
+            opacity: 0.03; pointer-events: none; z-index: 9999;
+        }
+        .card { background: #FEFDFB; border-radius: 0.75rem; border: 1px solid #F5E9D4; box-shadow: 0 4px 6px -1px rgba(120, 53, 15, 0.05); }
+        .btn-caramel { background: #D97706; color: #fff; transition: all 0.15s; font-weight: 500; }
+        .btn-caramel:hover { background: #B45309; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3); }
+        .btn-ghost-warm { background: transparent; color: #D97706; border: 1px solid #FED7AA; transition: all 0.15s; }
+        .btn-ghost-warm:hover { background: #FFF7ED; border-color: #D97706; }
+        
+        /* 黑胶唱片旋转动画 */
+        @keyframes spin-vinyl { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .vinyl-spin { animation: spin-vinyl 4s linear infinite; }
+
+        /* 同步状态呼吸点 */
+        @keyframes sync-pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+        .sync-dot { animation: sync-pulse 2s infinite; }
+
+        /* 月历暖色模式 */
+        .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+        .cal-head { text-align: center; font-size: 10px; color: #A8A29E; padding-bottom: 4px; border-bottom: 1px solid #F5E9D4; margin-bottom: 4px; }
+        .cal-day { height: 48px; border-radius: 6px; padding: 4px; background: #FFF9F0; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
+        .cal-day:hover { border-color: #FED7AA; background: #fff; }
+        .cal-day.disabled { background: transparent; cursor: default; opacity: 0.3; }
+        .cal-day.active { background: #D97706; border-color: #B45309; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2); }
+        .cal-day.active .cal-num, .cal-day.active .cal-task { color: #fff; }
+        .cal-day.done { background: #ECFCCB; border-color: #D9F99D; }
+        .cal-day.done .cal-num { color: #4D7C0F; font-weight: 600; }
+        .cal-day.done .cal-task { color: #65A30D; }
+        
+        .cal-num { font-size: 12px; font-weight: 500; color: #78716C; line-height: 1; }
+        .cal-task { font-size: 9px; color: #A8A29E; text-align: center; line-height: 1; }
+        .cal-badge { position: absolute; top: 2px; right: 2px; width: 4px; height: 4px; border-radius: 50%; background: #D97706; }
+
+        .tag { font-size: 0.65rem; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-weight: 500; border: 1px solid transparent; }
+        .task-done-title { text-decoration: line-through; color: #A8A29E; }
+        .washi-tape { position: absolute; top: -8px; left: 20px; width: 60px; height: 16px; background: rgba(217, 119, 6, 0.15); transform: rotate(-2deg); }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-thumb { background: #F5E9D4; border-radius: 3px; }
+    </style>
+</head>
+<body class="p-4 md:p-6">
+
+    <!-- 顶栏 -->
+    <header class="max-w-7xl mx-auto flex justify-between items-center mb-4 pb-4 border-b border-border-warm">
+        <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-lg bg-caramel/10 flex items-center justify-center text-caramel border border-caramel/20">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            </div>
+            <div>
+                <h1 class="text-base font-bold text-coffee font-serif">纸间流光 AuraLog</h1>
+                <p class="text-xs text-text-light">记录光阴，见证成长。</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-5">
+            <div class="hidden md:flex items-center space-x-1 text-[10px] text-sage border-r border-border-warm pr-5">
+                <span class="w-1.5 h-1.5 rounded-full bg-sage sync-dot"></span>
+                <span>已与家长端同步</span>
+            </div>
+            <div class="flex items-center space-x-2 text-text-secondary border-r border-border-warm pr-5">
+                <span class="text-xs font-medium">流光币: <span class="text-caramel font-bold">185</span></span>
+            </div>
+            <div class="w-8 h-8 rounded-full bg-caramel/10 border border-caramel/20 flex items-center justify-center text-caramel font-medium text-xs cursor-pointer">彤</div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4">
+        
+        <main class="lg:col-span-2 space-y-4">
+            <!-- 顶部概览 -->
+            <div class="grid grid-cols-3 gap-4">
+                <div class="card p-4 flex flex-col justify-between">
+                    <span class="text-xs text-text-light font-medium">今日专注</span>
+                    <div class="flex items-baseline space-x-1 mt-2">
+                        <span class="text-2xl font-bold text-caramel">2.5</span>
+                        <span class="text-sm text-text-secondary">h</span>
+                    </div>
+                    <div class="text-xs text-sage mt-1">+ 30m vs 昨日</div>
+                </div>
+                <div class="card p-4 flex flex-col justify-between">
+                    <span class="text-xs text-text-light font-medium">任务进度</span>
+                    <div class="flex items-baseline space-x-1 mt-2">
+                        <span class="text-2xl font-bold text-coffee">3</span>
+                        <span class="text-sm text-text-secondary">/ 6</span>
+                    </div>
+                    <div class="w-full bg-bg-warm rounded-full h-1.5 mt-2 border border-border-warm">
+                        <div class="bg-caramel h-1.5 rounded-full" style="width: 50%"></div>
+                    </div>
+                </div>
+                <div class="card p-4 flex flex-col justify-between">
+                    <span class="text-xs text-text-light font-medium">假期流转</span>
+                    <div class="flex items-baseline space-x-1 mt-2">
+                        <span class="text-2xl font-bold text-coffee">15</span>
+                        <span class="text-sm text-text-secondary">/ 30 天</span>
+                    </div>
+                    <div class="w-full bg-bg-warm rounded-full h-1.5 mt-2 border border-border-warm">
+                        <div class="bg-sage h-1.5 rounded-full" style="width: 50%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 月历 -->
+            <div class="card p-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-sm font-medium text-coffee font-serif flex items-center">
+                        <svg class="w-4 h-4 mr-2 text-caramel" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        January 暖冬手历
+                    </h2>
+                    <div class="flex items-center space-x-3 text-text-light">
+                        <div class="flex items-center space-x-2 text-[10px]">
+                            <span class="flex items-center"><span class="w-2 h-2 rounded-sm bg-sage-light border border-sage/30 mr-1"></span>已过</span>
+                            <span class="flex items-center"><span class="w-2 h-2 rounded-sm bg-caramel mr-1"></span>今日</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="cal-grid"><div class="cal-head">日</div><div class="cal-head">一</div><div class="cal-head">二</div><div class="cal-head">三</div><div class="cal-head">四</div><div class="cal-head">五</div><div class="cal-head">六</div></div>
+                <div class="cal-grid mt-1">
+                    <div class="cal-day disabled"></div>
+                    <div class="cal-day done"><span class="cal-num">1</span><span class="cal-task">3/3</span></div>
+                    <div class="cal-day done"><span class="cal-num">2</span><span class="cal-task">4/4</span></div>
+                    <div class="cal-day done"><span class="cal-num">3</span><span class="cal-task">2/2</span></div>
+                    <div class="cal-day active"><span class="cal-num">4</span><span class="cal-task">3/6</span></div>
+                    <div class="cal-day"><span class="cal-num">5</span><span class="cal-task">1/4</span></div>
+                    <div class="cal-day"><span class="cal-num">6</span><span class="cal-task">0/3</span></div>
+                    <div class="cal-day done"><span class="cal-num">7</span><span class="cal-task">3/3</span></div>
+                    <div class="cal-day done"><span class="cal-num">8</span><span class="cal-task">5/5</span></div>
+                    <div class="cal-day done relative"><div class="cal-badge"></div><span class="cal-num">9</span><span class="cal-task">2/2</span></div>
+                    <div class="cal-day"><span class="cal-num">10</span><span class="cal-task">1/5</span></div>
+                    <div class="cal-day"><span class="cal-num">11</span><span class="cal-task">2/4</span></div>
+                    <div class="cal-day"><span class="cal-num">12</span><span class="cal-task">0/2</span></div>
+                    <div class="cal-day done"><span class="cal-num">13</span><span class="cal-task">4/4</span></div>
+                    <div class="cal-day done"><span class="cal-num">14</span><span class="cal-task">3/3</span></div>
+                    <div class="cal-day done"><span class="cal-num">15</span><span class="cal-task">6/6</span></div>
+                    <div class="cal-day done"><span class="cal-num">16</span><span class="cal-task">2/2</span></div>
+                    <div class="cal-day"><span class="cal-num">17</span><span class="cal-task">1/3</span></div>
+                    <div class="cal-day"><span class="cal-num">18</span><span class="cal-task">0/4</span></div>
+                    <div class="cal-day"><span class="cal-num">19</span><span class="cal-task">0/2</span></div>
+                    <div class="cal-day"><span class="cal-num">20</span><span class="cal-task">0/3</span></div>
+                    <div class="cal-day"><span class="cal-num">21</span><span class="cal-task">0/3</span></div>
+                    <div class="cal-day"><span class="cal-num">22</span><span class="cal-task">0/4</span></div>
+                    <div class="cal-day"><span class="cal-num">23</span><span class="cal-task">0/2</span></div>
+                    <div class="cal-day"><span class="cal-num">24</span><span class="cal-task">0/3</span></div>
+                    <div class="cal-day"><span class="cal-num">25</span><span class="cal-task">0/4</span></div>
+                    <div class="cal-day"><span class="cal-num">26</span><span class="cal-task">0/2</span></div>
+                    <div class="cal-day"><span class="cal-num">27</span><span class="cal-task">0/3</span></div>
+                    <div class="cal-day"><span class="cal-num">28</span><span class="cal-task">0/3</span></div>
+                    <div class="cal-day"><span class="cal-num">29</span><span class="cal-task">0/4</span></div>
+                    <div class="cal-day"><span class="cal-num">30</span><span class="cal-task">0/2</span></div>
+                    <div class="cal-day relative"><div class="cal-badge"></div><span class="cal-num">31</span><span class="cal-task">完结</span></div>
+                    <div class="cal-day disabled"></div><div class="cal-day disabled"></div><div class="cal-day disabled"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center px-1 pt-2">
+                <h3 class="text-sm font-medium text-coffee font-serif">今日待办 (1月4日)</h3>
+            </div>
+
+            <!-- 任务卡片 1: 进行中状态 (黑胶唱片机) -->
+            <div class="card p-4 border border-caramel/30 bg-caramel-light/10">
+                <div class="flex items-start space-x-4">
+                    <!-- 唱片机动画 -->
+                    <div class="relative w-16 h-16 flex-shrink-0 flex items-center justify-center mt-1">
+                        <div class="absolute inset-0 rounded-full bg-gray-900 vinyl-spin" style="background-image: repeating-radial-gradient(circle at center, #222 0px, #222 2px, #111 3px); border: 2px solid #333;"></div>
+                        <div class="absolute w-5 h-5 rounded-full bg-caramel border border-orange-200 flex items-center justify-center text-[8px] text-black font-bold">A</div>
+                        <div class="absolute top-0 right-1 w-1 h-8 bg-gray-600 origin-top transform rotate-12"></div>
+                        <div class="absolute top-0 right-0.5 w-2 h-2 rounded-full bg-gray-500"></div>
+                    </div>
+                    
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="tag bg-caramel/10 text-caramel border-caramel/20">数学预习</span>
+                                <h4 class="text-sm font-medium text-text-main mt-1">预习初二数学《勾股定理》</h4>
+                            </div>
+                            <!-- 右上角预留拍照按钮占位 -->
+                            <span class="text-xs text-text-light">预计 30m</span>
+                        </div>
+                        <div class="flex items-center justify-between mt-3 bg-white/50 p-2.5 rounded-lg border border-border-warm">
+                            <div class="flex items-center space-x-3">
+                                <div class="text-sm font-mono font-medium text-caramel">00:12:35</div>
+                                <span class="text-[10px] text-text-light">唱片旋转中... (家长端可见)</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <button class="text-[10px] px-2 py-1 rounded bg-caramel/10 text-caramel border border-caramel/20">☕ 咖啡馆</button>
+                                <button class="btn-caramel px-3 py-1 rounded text-xs font-medium ml-1">停止并拍照</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任务卡片 2: 待评价状态 (含小型照片凭证) -->
+            <div class="card p-4 border-l-2 border-sage/50 relative overflow-visible">
+                <div class="washi-tape"></div>
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="tag bg-orange-50 text-orange-600 border-orange-100">校内作业</span>
+                        <h4 class="text-sm font-medium task-done-title">寒假语文作业本 P10-P12</h4>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <!-- 照片凭证缩略图 (点击查看大图) -->
+                        <div class="relative w-8 h-8 rounded border border-caramel/30 overflow-hidden cursor-pointer group" title="点击查看作业照片">
+                            <img src="https://placehold.co/100x100/F5E9D4/78350F?text=HW" class="w-full h-full object-cover" alt="作业照片">
+                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white opacity-0 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                        </div>
+                        <span class="text-xs text-text-light">55m</span>
+                    </div>
+                </div>
+                
+                <div class="bg-bg-warm/50 p-2 rounded text-xs text-text-secondary leading-relaxed border-l border-sage/20 pl-3 italic font-serif mt-2">
+                    "文言文翻译《愚公移山》太磨人，'之'字用法太多。写完挺有成就感。"
+                </div>
+                <div class="flex justify-between items-center mt-2">
+                    <span class="text-[10px] text-caramel font-medium flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        已同步至家长端
+                    </span>
+                    <span class="text-[10px] text-sage/80 font-medium flex items-center">
+                        <span class="w-1 h-1 rounded-full bg-sage/80 mr-1 animate-pulse"></span>等待回信...
+                    </span>
+                </div>
+            </div>
+
+            <!-- 任务卡片 3: 已评价状态 (含小型照片凭证) -->
+            <div class="card p-4 border-l-2 border-caramel/40">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="tag bg-caramel/10 text-caramel border-caramel/20">旧课复习</span>
+                        <h4 class="text-sm font-medium task-done-title">复习初一生物细胞结构</h4>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="relative w-8 h-8 rounded border border-caramel/30 overflow-hidden cursor-pointer group" title="点击查看笔记照片">
+                            <img src="https://placehold.co/100x100/D1FAE5/4D7C0F?text=Bio" class="w-full h-full object-cover" alt="生物笔记">
+                        </div>
+                        <span class="text-xs font-bold text-caramel">+15 流光币</span>
+                    </div>
+                </div>
+                <div class="bg-caramel-light/20 p-2 rounded text-xs text-text-secondary leading-relaxed border-l border-caramel/30 pl-3 mt-1">
+                    <span class="font-bold text-caramel">[家长回信]</span> 动植物细胞结构对比图画得很清晰！期末丢分了，这次复习到位了，继续保持~
+                </div>
+            </div>
+
+        </main>
+
+        <aside class="space-y-4">
+            <!-- 课外阅读卡片 -->
+            <div class="card p-4 bg-gradient-to-br from-card-cream to-bg-warm border-caramel/30">
+                <h3 class="text-sm font-medium text-coffee font-serif mb-3 flex items-center">
+                    <svg class="w-4 h-4 mr-2 text-caramel" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    课外阅读
+                </h3>
+                <div class="flex items-center space-x-3 mb-3">
+                    <div class="w-10 h-12 bg-caramel-light rounded flex items-center justify-center border border-caramel/20">
+                        <svg class="w-6 h-6 text-caramel" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-text-main">《骆驼祥子》</h4>
+                        <p class="text-[10px] text-text-light mt-0.5">老舍 · 人民文学出版社</p>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="flex justify-between text-xs text-text-secondary mb-1">
+                        <span>当前：第 16-18 章</span>
+                        <span class="font-medium text-text-main">15/24 章</span>
+                    </div>
+                    <div class="w-full bg-bg-warm rounded-full h-1.5 border border-border-warm">
+                        <div class="bg-sage h-1.5 rounded-full" style="width: 62%"></div>
+                    </div>
+                </div>
+                <button class="btn-ghost-warm w-full py-1.5 rounded text-xs font-medium">继续阅读</button>
+            </div>
+
+            <div class="card p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-medium text-coffee font-serif">本周频段</h3>
+                    <span class="text-xs text-text-light">h</span>
+                </div>
+                <div class="flex items-end justify-between h-24 space-x-2">
+                    <div class="flex-1 flex flex-col items-center justify-end space-y-1"><div class="w-full bg-bg-warm rounded-t border border-border-warm" style="height: 50%"></div><span class="text-[10px] text-text-light">周一</span></div>
+                    <div class="flex-1 flex flex-col items-center justify-end space-y-1"><div class="w-full bg-bg-warm rounded-t border border-border-warm" style="height: 70%"></div><span class="text-[10px] text-text-light">周二</span></div>
+                    <div class="flex-1 flex flex-col items-center justify-end space-y-1"><div class="w-full bg-bg-warm rounded-t border border-border-warm" style="height: 85%"></div><span class="text-[10px] text-text-light">周三</span></div>
+                    <div class="flex-1 flex flex-col items-center justify-end space-y-1"><div class="w-full bg-caramel rounded-t" style="height: 85%"></div><span class="text-[10px] text-caramel font-bold">今日</span></div>
+                    <div class="flex-1 flex flex-col items-center justify-end space-y-1"><div class="w-full bg-bg-warm/50 rounded-t border border-dashed border-border-warm" style="height: 10%"></div><span class="text-[10px] text-text-light">周五</span></div>
+                </div>
+            </div>
+            
+            <div class="card p-4">
+                <h3 class="text-sm font-medium text-coffee font-serif mb-3">星辰大海</h3>
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-xs text-text-secondary mb-1"><span>完成 5 篇优秀习作</span><span class="font-medium text-text-main">2/5</span></div>
+                        <div class="w-full bg-bg-warm rounded-full h-1.5 border border-border-warm"><div class="bg-caramel h-1.5 rounded-full" style="width: 40%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs text-text-secondary mb-1"><span>背诵词汇 500</span><span class="font-medium text-text-main">120/500</span></div>
+                        <div class="w-full bg-bg-warm rounded-full h-1.5 border border-border-warm"><div class="bg-orange-400 h-1.5 rounded-full" style="width: 24%"></div></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card p-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-medium text-coffee font-serif">时光杂货铺</h3>
+                </div>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between p-2.5 bg-bg-warm/40 rounded border border-border-warm"><span class="text-xs text-text-secondary">周末看电影</span><span class="text-xs text-caramel font-medium">50 流光币</span></div>
+                    <div class="flex items-center justify-between p-2.5 bg-bg-warm/40 rounded border border-border-warm"><span class="text-xs text-text-secondary">买手办盲盒</span><span class="text-xs text-caramel font-medium">200 流光币</span></div>
+                </div>
+            </div>
+            
+            <div class="card p-4 bg-gradient-to-br from-card-cream to-bg-warm border-caramel/30 flex items-center justify-between">
+                <div>
+                    <h4 class="text-xs font-medium text-caramel font-serif">手账回信局</h4>
+                    <p class="text-[10px] text-text-secondary mt-0.5">已收到 9 条好词好句</p>
+                </div>
+                <button class="text-xs text-caramel font-medium hover:underline">写信 ›</button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- AI 陪伴者 -->
+    <div class="fixed bottom-8 right-8 z-50 group cursor-pointer">
+        <div class="relative flex flex-col items-center">
+            <div class="absolute -top-2 w-4 h-4 border-2 border-caramel rounded-full radio-wave opacity-0"></div>
+            <div class="absolute -top-2 w-4 h-4 border-2 border-caramel rounded-full radio-wave" style="animation-delay: 0.5s"></div>
+            <div class="w-12 h-8 bg-caramel rounded-md flex items-center justify-center shadow-lg border border-coffee/20 relative">
+                <div class="grid grid-cols-3 gap-0.5 w-6 h-4">
+                    <div class="w-1 h-1 bg-coffee/30 rounded-full"></div><div class="w-1 h-1 bg-coffee/30 rounded-full"></div><div class="w-1 h-1 bg-coffee/30 rounded-full"></div>
+                    <div class="w-1 h-1 bg-coffee/30 rounded-full"></div><div class="w-1 h-1 bg-coffee/30 rounded-full"></div><div class="w-1 h-1 bg-coffee/30 rounded-full"></div>
+                </div>
+                <div class="absolute right-1 w-2 h-2 bg-yellow-200 rounded-full border border-coffee/30"></div>
+            </div>
+            <div class="w-0.5 h-4 bg-coffee/40 transform rotate-12 -mb-2"></div>
+            <p class="text-[10px] text-caramel mt-1 font-medium">点我聊天</p>
+        </div>
+    </div>
+
+</body>
+</html>

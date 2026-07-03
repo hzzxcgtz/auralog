@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  role         String   // PARENT / STUDENT
+  username     String   @unique
+  name         String
+  passwordHash String
+  points       Int      @default(0) // 学生积分余额
+  createdAt    DateTime @default(now())
+  tasks        DailyTask[]
+  readingLogs  ReadingLog[]
+  rewards      Reward[]
+}
+
+model Vacation {
+  id             Int             @id @default(autoincrement())
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+  tasks          DailyTask[]
+  specialPeriods SpecialPeriod[]
+}
+
+model SpecialPeriod {
+  id        Int      @id @default(autoincrement())
+  vacationId Int
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  color     String   @default("blue") // blue / green / purple / pink / orange / yellow
+  note      String?  // 备注说明
+  vacation  Vacation @relation(fields: [vacationId], references: [id], onDelete: Cascade)
+
+  @@map("special_periods")
+}
+
+model DailyTask {
+  id            Int      @id @default(autoincrement())
+  vacationId    Int
+  date          DateTime
+  title         String
+  category      String   // SCHOOLWORK, PREVIEW, REVIEW, EXERCISE
+  estimatedTime Int      // 预估时间(分钟)
+  status        String   // TODO, IN_PROGRESS, DONE, PENDING_REVIEW, GRADED
+  spentTime     Int?     // 实际耗时(秒)
+  studentNote   String?  // 学生心得
+  parentComment String?  // 家长评语
+  points        Int?     // 获得积分
+  studentId     Int?
+  photos        TaskPhoto[]
+
+  bookId      Int?     // 关联书籍（阅读任务）
+  bookTitle   String?  // 书籍名称快照（方便显示）
+  vacation Vacation @relation(fields: [vacationId], references: [id])
+  student  User?    @relation(fields: [studentId], references: [id])
+  book     Book?    @relation(fields: [bookId], references: [id])
+}
+
+model TaskPhoto {
+  id        Int      @id @default(autoincrement())
+  taskId    Int
+  url       String   // 照片存储URL
+  createdAt DateTime @default(now())
+
+  task DailyTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model TaskCategory {
+  id        Int    @id @default(autoincrement())
+  value     String
+  label     String
+  color     String // orange / caramel / emerald / blue / purple
+  sortOrder Int    @default(0)
+
+  @@map("task_categories")
+}
+
+model GlobalTask {
+  id           Int    @id @default(autoincrement())
+  title        String
+  targetCount  Int
+  currentCount Int
+  studentId    Int?
+}
+
+model Book {
+  id            Int     @id @default(autoincrement())
+  title         String
+  author        String?
+  isRequired    Boolean @default(false)
+  totalChapters Int?
+  totalPages    Int?
+  studentId     Int?
+  readingLogs   ReadingLog[]
+  dailyTasks    DailyTask[]
+}
+
+model ReadingLog {
+  id            Int      @id @default(autoincrement())
+  bookId        Int
+  studentId     Int?
+  date          DateTime
+  progressRead  String   // 阅读进度
+  excerpts      String?  // 好词好句
+  thoughts      String?  // 读后感
+  parentComment String?  // 家长评语
+  points        Int?     // 获得积分
+  status        String   @default("PENDING_REVIEW") // PENDING_REVIEW / GRADED
+
+  book    Book  @relation(fields: [bookId], references: [id])
+  student User? @relation(fields: [studentId], references: [id])
+}
+
+model Reward {
+  id         Int      @id @default(autoincrement())
+  title      String
+  cost       Int
+  stock      Int
+  status     String   @default("AVAILABLE") // AVAILABLE / PENDING / APPROVED / REJECTED
+  userId     Int?     // 兑换学生
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+model ReviewReport {
+  id            Int      @id @default(autoincrement())
+  type          String   // STAGE / FINAL
+  stageNumber   Int?
+  startDate     DateTime
+  endDate       DateTime
+  dataSnapshot  String   // JSON
+  parentComment String?
+  badgeAwarded  String?
+  createdAt     DateTime @default(now())
+}

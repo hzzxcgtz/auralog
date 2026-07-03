@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>纸间流光 AuraLog - 阅读手账局</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bg-warm': '#FFF9F0', 'card-cream': '#FEFDFB',
+                        'caramel': '#D97706', 'caramel-light': '#FED7AA',
+                        'sage': '#84CC16', 'sage-light': '#ECFCCB',
+                        'coffee': '#78350F', 'text-main': '#44403C',
+                        'text-secondary': '#78716C', 'text-light': '#A8A29E',
+                        'border-warm': '#F5E9D4',
+                    },
+                    fontFamily: { 
+                        'sans': ['Noto Sans SC', 'sans-serif'],
+                        'serif': ['Noto Serif SC', 'serif'] 
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { 
+            font-family: 'Noto Sans SC', sans-serif; 
+            background-color: #FFF9F0; color: #44403C; font-size: 14px;
+            position: relative;
+        }
+        /* 全局极淡纸张噪点 */
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E");
+            opacity: 0.03; pointer-events: none; z-index: 9999;
+        }
+        .card { background: #FEFDFB; border-radius: 0.75rem; border: 1px solid #F5E9D4; box-shadow: 0 4px 6px -1px rgba(120, 53, 15, 0.05); }
+        .btn-caramel { background: #D97706; color: #fff; transition: all 0.15s; font-weight: 500; }
+        .btn-caramel:hover { background: #B45309; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3); }
+        
+        /* 瀑布流布局 */
+        .masonry { column-count: 2; column-gap: 1rem; }
+        @media (max-width: 768px) { .masonry { column-count: 1; } }
+        .masonry-item { break-inside: avoid; margin-bottom: 1rem; }
+
+        /* 纸胶带样式（多种颜色与角度） */
+        .tape-caramel { position: absolute; top: -8px; left: 20px; width: 60px; height: 16px; background: rgba(217, 119, 6, 0.2); transform: rotate(-2deg); border-left: 2px dashed rgba(217, 119, 6, 0.1); border-right: 2px dashed rgba(217, 119, 6, 0.1); }
+        .tape-sage { position: absolute; top: -8px; left: 40px; width: 50px; height: 16px; background: rgba(132, 204, 22, 0.2); transform: rotate(1.5deg); border-left: 2px dashed rgba(132, 204, 22, 0.1); border-right: 2px dashed rgba(132, 204, 22, 0.1); }
+        .tape-coffee { position: absolute; top: -8px; right: 20px; width: 70px; height: 16px; background: rgba(120, 53, 15, 0.15); transform: rotate(-1deg); border-left: 2px dashed rgba(120, 53, 15, 0.1); border-right: 2px dashed rgba(120, 53, 15, 0.1); }
+
+        /* AI 陪伴者信号波纹 */
+        @keyframes wave { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(1.5); opacity: 0; } }
+        .radio-wave { animation: wave 1.5s ease-out infinite; }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-thumb { background: #F5E9D4; border-radius: 3px; }
+    </style>
+</head>
+<body class="p-4 md:p-6 pb-20">
+
+    <!-- 顶栏 -->
+    <header class="max-w-7xl mx-auto flex justify-between items-center mb-6 pb-4 border-b border-border-warm">
+        <div class="flex items-center space-x-3">
+            <a href="#" class="text-text-light hover:text-caramel">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </a>
+            <div>
+                <h1 class="text-base font-bold text-coffee font-serif">阅读手账局</h1>
+                <p class="text-xs text-text-light">纸间留墨，岁月生香。</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button class="btn-caramel px-4 py-1.5 rounded-md text-xs font-medium flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                新建摘录
+            </button>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- 左侧主区域 -->
+        <main class="lg:col-span-2 space-y-6">
+            
+            <!-- 当前阅读书目卡 -->
+            <div class="card p-5 flex items-center space-x-4 border-l-4 border-caramel">
+                <div class="w-16 h-20 bg-gradient-to-br from-caramel to-coffee rounded shadow-md flex items-center justify-center text-white font-serif text-xs p-2 text-center leading-tight">
+                    骆驼<br>祥子
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-base font-bold text-text-main font-serif">《骆驼祥子》</h3>
+                    <p class="text-xs text-text-light mt-1">老舍 · 进度 15/24 章 · 累计阅读 6.5h</p>
+                    <div class="flex items-center mt-2">
+                        <div class="w-full max-w-[200px] bg-bg-warm rounded-full h-2 border border-border-warm mr-3">
+                            <div class="bg-sage h-full rounded-full" style="width: 62%"></div>
+                        </div>
+                        <span class="text-xs text-sage font-bold">62%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 手账瀑布流标题 -->
+            <div class="flex items-center space-x-2">
+                 <h3 class="text-sm font-medium text-coffee font-serif">手账墙</h3>
+                 <span class="text-xs text-text-light">(共 9 条摘录)</span>
+            </div>
+
+            <!-- 手账瀑布流主体 -->
+            <div class="masonry">
+                
+                <!-- 手账卡片 1: 含家长回信 -->
+                <div class="masonry-item card p-4 relative overflow-visible shadow-sm transform hover:-translate-y-1 transition-transform">
+                    <div class="tape-caramel"></div>
+                    <div class="mt-2">
+                        <div class="bg-bg-warm/50 p-3 rounded border-l-2 border-caramel/40">
+                            <p class="text-xs text-text-secondary leading-relaxed italic font-serif">
+                                "雨下给富人，也下给穷人；下给义人，也下给不义的人。其实雨并不公道，因为落在一个没有公道的世界上。"
+                            </p>
+                        </div>
+                        <div class="mt-3 text-xs text-text-main leading-relaxed font-serif">
+                            祥子的三起三落让我觉得好压抑，老舍先生笔下的雨，透着一股刺骨的绝望。没有公道的世界，努力真的有用吗？
+                        </div>
+                        <div class="flex justify-between items-center mt-3 text-[10px] text-text-light">
+                            <span>1月3日 · 第8章</span>
+                            <span class="bg-caramel/10 text-caramel px-1.5 py-0.5 rounded text-[9px]">景物描写</span>
+                        </div>
+                    </div>
+                    <!-- 家长回信 -->
+                    <div class="mt-3 bg-caramel-light/20 p-2 rounded text-xs text-text-secondary leading-relaxed border-l border-caramel/30 pl-3">
+                        <span class="font-bold text-caramel">[妈妈回信]</span> 很深刻的思考！祥子的悲剧有时代的原因。我们现在拥有公道和选择的权利，更应珍惜努力的价值。继续读下去，看看祥子最后的选择。
+                    </div>
+                </div>
+
+                <!-- 手账卡片 2: 普通摘录 -->
+                <div class="masonry-item card p-4 relative overflow-visible shadow-sm transform hover:-translate-y-1 transition-transform">
+                    <div class="tape-sage"></div>
+                    <div class="mt-2">
+                        <div class="bg-bg-warm/50 p-3 rounded border-l-2 border-sage/40">
+                            <p class="text-xs text-text-secondary leading-relaxed italic font-serif">
+                                "他们的车破，又不敢"拉晚儿"，所以只能早早出车，希望能从清晨转到午后三四点钟。"
+                            </p>
+                        </div>
+                        <div class="mt-3 text-xs text-text-main leading-relaxed font-serif">
+                            细节描写太真实了，能想象到老车夫在寒风中等客人的瑟缩感。比起祥子，老马小马祖孙俩更惨。
+                        </div>
+                        <div class="flex justify-between items-center mt-3 text-[10px] text-text-light">
+                            <span>1月2日 · 第10章</span>
+                            <span class="bg-sage/10 text-sage px-1.5 py-0.5 rounded text-[9px]">细节刻画</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 手账卡片 3: 短摘录 -->
+                <div class="masonry-item card p-4 relative overflow-visible shadow-sm transform hover:-translate-y-1 transition-transform">
+                    <div class="tape-coffee"></div>
+                    <div class="mt-2">
+                        <div class="bg-bg-warm/50 p-3 rounded border-l-2 border-coffee/40">
+                            <p class="text-xs text-text-secondary leading-relaxed italic font-serif">
+                                "钱会把人引进恶劣的社会中去，把高尚的理想撇开，而甘心走入地狱中去。"
+                            </p>
+                        </div>
+                        <div class="mt-3 text-xs text-text-main leading-relaxed font-serif">
+                            记下这句，用来警醒自己。不能做金钱的奴隶。
+                        </div>
+                        <div class="flex justify-between items-center mt-3 text-[10px] text-text-light">
+                            <span>1月1日 · 第5章</span>
+                            <span class="bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded text-[9px]">哲理感悟</span>
+                        </div>
+                    </div>
+                </div>
+
+                 <!-- 手账卡片 4: 待回信 -->
+                 <div class="masonry-item card p-4 relative overflow-visible shadow-sm transform hover:-translate-y-1 transition-transform border-dashed border-sage/30">
+                    <div class="tape-caramel" style="left: 30px;"></div>
+                    <div class="mt-2">
+                        <div class="bg-bg-warm/50 p-3 rounded border-l-2 border-caramel/40">
+                            <p class="text-xs text-text-secondary leading-relaxed italic font-serif">
+                                "体面的，要强的，好梦想的，利己的，个人的，健壮的，伟大的，祥子，不知陪着人家送了多少回殡..."
+                            </p>
+                        </div>
+                        <div class="mt-3 text-xs text-text-main leading-relaxed font-serif">
+                            结局的这段排比句读得心里发堵。曾经的“体面”和“要强”都没了，变成了行尸走肉。
+                        </div>
+                        <div class="flex justify-between items-center mt-3 text-[10px] text-text-light">
+                            <span>1月4日 · 第24章(完)</span>
+                            <span class="bg-accent/10 text-accent px-1.5 py-0.5 rounded text-[9px]">结局感悟</span>
+                        </div>
+                    </div>
+                    <div class="text-right mt-2 text-[10px] text-sage/80 font-medium flex items-center justify-end">
+                        <span class="w-1 h-1 rounded-full bg-sage/80 mr-1 animate-pulse"></span>等待家长回信...
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- 右侧侧边栏 -->
+        <aside class="space-y-4">
+            <!-- 书架管理 -->
+            <div class="card p-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-medium text-coffee font-serif">假期书架</h3>
+                    <button class="text-xs text-caramel hover:underline">管理</button>
+                </div>
+                <div class="space-y-3">
+                    <!-- 在读 -->
+                    <div class="flex items-center space-x-3 p-2 bg-bg-warm/40 rounded border border-caramel/20">
+                        <div class="w-8 h-10 bg-gradient-to-br from-caramel to-coffee rounded-sm flex-shrink-0"></div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-xs font-medium text-text-main truncate font-serif">《骆驼祥子》</h4>
+                            <p class="text-[10px] text-caramel">在读 · 62%</p>
+                        </div>
+                    </div>
+                    <!-- 待读 -->
+                    <div class="flex items-center space-x-3 p-2 rounded hover:bg-bg-warm/40 transition-colors">
+                        <div class="w-8 h-10 bg-gradient-to-br from-sage to-green-800 rounded-sm flex-shrink-0 opacity-70"></div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-xs font-medium text-text-secondary truncate font-serif">《钢铁是怎样炼成的》</h4>
+                            <p class="text-[10px] text-text-light">待读</p>
+                        </div>
+                    </div>
+                    <!-- 已读 -->
+                    <div class="flex items-center space-x-3 p-2 rounded hover:bg-bg-warm/40 transition-colors">
+                        <div class="w-8 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-sm flex-shrink-0 opacity-70"></div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-xs font-medium text-text-light truncate line-through font-serif">《朝花夕拾》</h4>
+                            <p class="text-[10px] text-sage">已读 · 1月2日完成</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 摘录统计 -->
+            <div class="card p-4 bg-gradient-to-br from-card-cream to-bg-warm border-caramel/30">
+                <h3 class="text-sm font-medium text-coffee font-serif mb-3">手账印记</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="text-center p-2 bg-white/50 rounded border border-border-warm">
+                        <div class="text-xl font-bold text-caramel">9</div>
+                        <div class="text-[10px] text-text-light mt-1">总摘录数</div>
+                    </div>
+                    <div class="text-center p-2 bg-white/50 rounded border border-border-warm">
+                        <div class="text-xl font-bold text-sage">4</div>
+                        <div class="text-[10px] text-text-light mt-1">已获回信</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 好词收集 -->
+            <div class="card p-4">
+                <h3 class="text-sm font-medium text-coffee font-serif mb-3">生词花篮</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2 py-1 bg-orange-50 text-orange-700 text-[10px] rounded border border-orange-100 font-serif">体面</span>
+                    <span class="px-2 py-1 bg-green-50 text-green-700 text-[10px] rounded border border-green-100 font-serif">瑟缩</span>
+                    <span class="px-2 py-1 bg-purple-50 text-purple-700 text-[10px] rounded border border-purple-100 font-serif">作践</span>
+                    <span class="px-2 py-1 bg-blue-50 text-blue-700 text-[10px] rounded border border-blue-100 font-serif">潦倒</span>
+                    <span class="px-2 py-1 bg-pink-50 text-pink-700 text-[10px] rounded border border-pink-100 font-serif">迷惘</span>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- AI 陪伴者 -->
+    <div class="fixed bottom-8 right-8 z-50 group cursor-pointer">
+        <div class="relative flex flex-col items-center">
+            <div class="absolute -top-2 w-4 h-4 border-2 border-caramel rounded-full radio-wave opacity-0"></div>
+            <div class="absolute -top-2 w-4 h-4 border-2 border-caramel rounded-full radio-wave" style="animation-delay: 0.5s"></div>
+            <div class="w-12 h-8 bg-caramel rounded-md flex items-center justify-center shadow-lg border border-coffee/20 relative">
+                <div class="grid grid-cols-3 gap-0.5 w-6 h-4">
+                    <div class="w-1 h-1 bg-coffee/30 rounded-full"></div><div class="w-1 h-1 bg-coffee/30 rounded-full"></div><div class="w-1 h-1 bg-coffee/30 rounded-full"></div>
+                    <div class="w-1 h-1 bg-coffee/30 rounded-full"></div><div class="w-1 h-1 bg-coffee/30 rounded-full"></div><div class="w-1 h-1 bg-coffee/30 rounded-full"></div>
+                </div>
+                <div class="absolute right-1 w-2 h-2 bg-yellow-200 rounded-full border border-coffee/30"></div>
+            </div>
+            <div class="w-0.5 h-4 bg-coffee/40 transform rotate-12 -mb-2"></div>
+            <p class="text-[10px] text-caramel mt-1 font-medium">点我聊天</p>
+        </div>
+    </div>
+
+</body>
+</html>

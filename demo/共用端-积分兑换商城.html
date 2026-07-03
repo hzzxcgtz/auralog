@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>纸间流光 AuraLog - 时光杂货铺</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bg-warm': '#FFF9F0', 'card-cream': '#FEFDFB',
+                        'caramel': '#D97706', 'caramel-light': '#FED7AA',
+                        'sage': '#84CC16', 'sage-light': '#ECFCCB',
+                        'coffee': '#78350F', 'text-main': '#44403C',
+                        'text-secondary': '#78716C', 'text-light': '#A8A29E',
+                        'border-warm': '#F5E9D4',
+                    },
+                    fontFamily: { 
+                        'sans': ['Noto Sans SC', 'sans-serif'],
+                        'serif': ['Noto Serif SC', 'serif'] 
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { 
+            font-family: 'Noto Sans SC', sans-serif; 
+            background-color: #FFF9F0; color: #44403C; font-size: 14px;
+            position: relative;
+        }
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E");
+            opacity: 0.03; pointer-events: none; z-index: 9999;
+        }
+        .card { background: #FEFDFB; border-radius: 0.75rem; border: 1px solid #F5E9D4; box-shadow: 0 4px 6px -1px rgba(120, 53, 15, 0.05); }
+        .btn-caramel { background: #D97706; color: #fff; transition: all 0.15s; font-weight: 500; }
+        .btn-caramel:hover { background: #B45309; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3); }
+        .btn-ghost-warm { background: transparent; color: #D97706; border: 1px solid #FED7AA; transition: all 0.15s; }
+        .btn-ghost-warm:hover { background: #FFF7ED; border-color: #D97706; }
+        .btn-disabled { background: #E5E5E5; color: #9CA3AF; cursor: not-allowed; }
+        
+        /* 纸胶带样式 */
+        .tape-caramel { position: absolute; top: -8px; left: 20px; width: 60px; height: 16px; background: rgba(217, 119, 6, 0.2); transform: rotate(-2deg); border-left: 2px dashed rgba(217, 119, 6, 0.1); border-right: 2px dashed rgba(217, 119, 6, 0.1); z-index: 10; }
+        .tape-sage { position: absolute; top: -8px; right: 20px; width: 50px; height: 16px; background: rgba(132, 204, 22, 0.2); transform: rotate(1.5deg); border-left: 2px dashed rgba(132, 204, 22, 0.1); border-right: 2px dashed rgba(132, 204, 22, 0.1); z-index: 10; }
+
+        /* 金币微光动画 */
+        @keyframes shine { 0% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(217, 119, 6, 0); } 100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); } }
+        .coin-shine { animation: shine 2s infinite; }
+
+        .tag { font-size: 0.65rem; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-weight: 500; border: 1px solid transparent; }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-thumb { background: #F5E9D4; border-radius: 3px; }
+    </style>
+</head>
+<body class="p-4 md:p-6">
+
+    <!-- 顶栏 -->
+    <header class="max-w-7xl mx-auto flex justify-between items-center mb-6 pb-4 border-b border-border-warm">
+        <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-lg bg-caramel/10 flex items-center justify-center text-caramel border border-caramel/20">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+            </div>
+            <div>
+                <h1 class="text-base font-bold text-coffee font-serif">时光杂货铺</h1>
+                <p class="text-xs text-text-light">积攒流光，兑换心愿。</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-5">
+            <div class="flex items-center space-x-2 bg-caramel/10 px-3 py-1.5 rounded-lg border border-caramel/20 coin-shine">
+                <span class="w-4 h-4 rounded-full bg-caramel flex items-center justify-center text-[8px] text-white font-bold">币</span>
+                <span class="text-sm font-bold text-caramel">185</span>
+            </div>
+            <div class="w-8 h-8 rounded-full bg-caramel/10 border border-caramel/20 flex items-center justify-center text-caramel font-medium text-xs cursor-pointer">彤</div>
+        </div>
+    </header>
+
+    <!-- 横幅：当前余额与兑换提示 -->
+    <div class="max-w-7xl mx-auto mb-6 card p-5 flex items-center justify-between bg-gradient-to-r from-card-cream to-bg-warm border-caramel/30">
+        <div class="flex items-center space-x-4">
+            <div class="text-4xl">💰</div>
+            <div>
+                <h2 class="text-sm font-bold text-coffee font-serif">彤彤的流光币余额</h2>
+                <p class="text-xs text-text-secondary mt-1">努力学习了 12 天，累计赚取 350 流光币，已兑换 165 流光币。</p>
+            </div>
+        </div>
+        <button class="btn-ghost-warm px-3 py-1.5 rounded text-xs font-medium">查看收支明细 ›</button>
+    </div>
+
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- 左侧主区域：商品货架 -->
+        <main class="lg:col-span-2 space-y-6">
+            
+            <!-- 分类切换 -->
+            <div class="flex items-center space-x-4 border-b border-border-warm pb-2">
+                <button class="text-sm font-medium text-caramel border-b-2 border-caramel pb-2 -mb-2">全部</button>
+                <button class="text-sm text-text-light hover:text-text-secondary pb-2">娱乐特权</button>
+                <button class="text-sm text-text-light hover:text-text-secondary pb-2">实物奖品</button>
+                <button class="text-sm text-text-light hover:text-text-secondary pb-2">学习工具</button>
+            </div>
+
+            <!-- 商品网格 -->
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                
+                <!-- 商品 1: 可兑换 -->
+                <div class="card p-4 relative overflow-visible transform hover:-translate-y-1 transition-transform">
+                    <div class="tape-caramel"></div>
+                    <div class="mt-2 flex flex-col items-center">
+                        <div class="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mb-3 border border-orange-100">
+                            <span class="text-3xl">🎬</span>
+                        </div>
+                        <h4 class="text-sm font-medium text-text-main font-serif text-center">周末看电影</h4>
+                        <p class="text-[10px] text-text-light text-center mt-1">本周任意场次</p>
+                        <div class="flex items-center mt-3 mb-3">
+                            <span class="w-3 h-3 rounded-full bg-caramel flex items-center justify-center text-[6px] text-white font-bold mr-1">币</span>
+                            <span class="text-base font-bold text-caramel">50</span>
+                        </div>
+                        <button class="btn-caramel w-full py-1.5 rounded text-xs font-medium">立即兑换</button>
+                    </div>
+                </div>
+
+                <!-- 商品 2: 可兑换 -->
+                <div class="card p-4 relative overflow-visible transform hover:-translate-y-1 transition-transform">
+                    <div class="tape-sage"></div>
+                    <div class="mt-2 flex flex-col items-center">
+                        <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-3 border border-green-100">
+                            <span class="text-3xl">🍦</span>
+                        </div>
+                        <h4 class="text-sm font-medium text-text-main font-serif text-center">买杯冰淇淋</h4>
+                        <p class="text-[10px] text-text-light text-center mt-1">限 10 元内</p>
+                        <div class="flex items-center mt-3 mb-3">
+                            <span class="w-3 h-3 rounded-full bg-caramel flex items-center justify-center text-[6px] text-white font-bold mr-1">币</span>
+                            <span class="text-base font-bold text-caramel">30</span>
+                        </div>
+                        <button class="btn-caramel w-full py-1.5 rounded text-xs font-medium">立即兑换</button>
+                    </div>
+                </div>
+
+                <!-- 商品 3: 积分不足 -->
+                <div class="card p-4 relative overflow-visible opacity-70">
+                    <div class="tape-caramel" style="background: rgba(156, 163, 175, 0.2);"></div>
+                    <div class="mt-2 flex flex-col items-center">
+                        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-3 border border-gray-100">
+                            <span class="text-3xl">🎁</span>
+                        </div>
+                        <h4 class="text-sm font-medium text-text-main font-serif text-center">买手办盲盒</h4>
+                        <p class="text-[10px] text-text-light text-center mt-1">指定店铺</p>
+                        <div class="flex items-center mt-3 mb-3">
+                            <span class="w-3 h-3 rounded-full bg-gray-400 flex items-center justify-center text-[6px] text-white font-bold mr-1">币</span>
+                            <span class="text-base font-bold text-text-secondary">200</span>
+                        </div>
+                        <button class="btn-disabled w-full py-1.5 rounded text-xs font-medium">还差 15 币</button>
+                    </div>
+                </div>
+
+                <!-- 商品 4: 已兑换 -->
+                <div class="card p-4 relative overflow-visible">
+                    <div class="tape-sage"></div>
+                    <span class="absolute top-2 right-2 bg-sage text-white text-[9px] px-1.5 py-0.5 rounded-full z-10">已兑换</span>
+                    <div class="mt-2 flex flex-col items-center">
+                        <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-3 border border-blue-100">
+                            <span class="text-3xl">🎮</span>
+                        </div>
+                        <h4 class="text-sm font-medium text-text-main font-serif text-center">游戏半小时</h4>
+                        <p class="text-[10px] text-text-light text-center mt-1">单日限 1 次</p>
+                        <div class="flex items-center mt-3 mb-3">
+                            <span class="w-3 h-3 rounded-full bg-caramel flex items-center justify-center text-[6px] text-white font-bold mr-1">币</span>
+                            <span class="text-base font-bold text-caramel">40</span>
+                        </div>
+                        <button class="btn-ghost-warm w-full py-1.5 rounded text-xs font-medium">查看兑换券</button>
+                    </div>
+                </div>
+
+                 <!-- 商品 5 -->
+                 <div class="card p-4 relative overflow-visible transform hover:-translate-y-1 transition-transform">
+                    <div class="tape-caramel"></div>
+                    <div class="mt-2 flex flex-col items-center">
+                        <div class="w-20 h-20 bg-yellow-50 rounded-full flex items-center justify-center mb-3 border border-yellow-100">
+                            <span class="text-3xl">📚</span>
+                        </div>
+                        <h4 class="text-sm font-medium text-text-main font-serif text-center">买本课外书</h4>
+                        <p class="text-[10px] text-text-light text-center mt-1">限 30 元内</p>
+                        <div class="flex items-center mt-3 mb-3">
+                            <span class="w-3 h-3 rounded-full bg-caramel flex items-center justify-center text-[6px] text-white font-bold mr-1">币</span>
+                            <span class="text-base font-bold text-caramel">80</span>
+                        </div>
+                        <button class="btn-caramel w-full py-1.5 rounded text-xs font-medium">立即兑换</button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- 右侧侧边栏 -->
+        <aside class="space-y-4">
+            <!-- 我的兑换单 -->
+            <div class="card p-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-medium text-coffee font-serif">我的兑换单</h3>
+                    <button class="text-xs text-text-light hover:text-caramel">全部 ›</button>
+                </div>
+                <div class="space-y-3">
+                    <!-- 待履约 -->
+                    <div class="p-2.5 bg-orange-50/50 rounded border border-orange-100 border-dashed">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="text-xs font-medium text-text-main flex items-center">
+                                <span class="w-1.5 h-1.5 rounded-full bg-orange-500 mr-2 animate-pulse"></span>
+                                周末看电影
+                            </h4>
+                            <span class="text-[10px] text-orange-600 font-medium">待履约</span>
+                        </div>
+                        <p class="text-[10px] text-text-light">已扣除 50 币 · 等待妈妈周末带你去</p>
+                    </div>
+                    <!-- 已完成 -->
+                    <div class="p-2.5 bg-bg-warm/40 rounded border border-border-warm">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="text-xs font-medium text-text-main flex items-center">
+                                <span class="w-1.5 h-1.5 rounded-full bg-sage mr-2"></span>
+                                买杯冰淇淋
+                            </h4>
+                            <span class="text-[10px] text-sage font-medium">已完成</span>
+                        </div>
+                        <p class="text-[10px] text-text-light">1月3日兑换 · 妈妈已支付</p>
+                    </div>
+                    <div class="p-2.5 bg-bg-warm/40 rounded border border-border-warm">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="text-xs font-medium text-text-main flex items-center">
+                                <span class="w-1.5 h-1.5 rounded-full bg-sage mr-2"></span>
+                                游戏半小时
+                            </h4>
+                            <span class="text-[10px] text-sage font-medium">已完成</span>
+                        </div>
+                        <p class="text-[10px] text-text-light">1月2日兑换 · 爸爸已确认</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 家长奖池管理入口 (如果家长登录可见) -->
+            <div class="card p-4 bg-gradient-to-br from-card-cream to-bg-warm border-coffee/30">
+                <div class="flex items-center space-x-3 mb-2">
+                    <div class="w-8 h-8 rounded-lg bg-coffee/10 flex items-center justify-center text-coffee">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-coffee font-serif">家长奖池管理</h4>
+                        <p class="text-[10px] text-text-light">设置奖品与价格</p>
+                    </div>
+                </div>
+                <p class="text-[10px] text-text-secondary leading-relaxed">彤彤最近很努力，是否考虑上架一个新的奖品激励她？</p>
+                <button class="btn-ghost-warm w-full mt-3 py-1.5 rounded text-xs font-medium border-coffee/20 text-coffee hover:bg-coffee/5 hover:border-coffee">进入管理后台</button>
+            </div>
+
+            <!-- 努力小贴士 -->
+            <div class="card p-4 border-l-2 border-caramel/40">
+                <h4 class="text-xs font-medium text-caramel font-serif mb-2">💡 赚取小贴士</h4>
+                <ul class="text-[10px] text-text-secondary space-y-1 leading-relaxed list-disc pl-4">
+                    <li>按时完成任务可获得基础流光币</li>
+                    <li>获得家长“4星”以上评价有额外奖励</li>
+                    <li>坚持每日阅读并记录心得</li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+
+</body>
+</html>

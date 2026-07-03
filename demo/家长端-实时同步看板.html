@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>纸间流光 AuraLog - 家长看板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bg-warm': '#FFF9F0', 'card-cream': '#FEFDFB',
+                        'caramel': '#D97706', 'caramel-light': '#FED7AA',
+                        'sage': '#84CC16', 'sage-light': '#ECFCCB',
+                        'coffee': '#78350F', 'text-main': '#44403C',
+                        'text-secondary': '#78716C', 'text-light': '#A8A29E',
+                        'border-warm': '#F5E9D4',
+                    },
+                    fontFamily: { 
+                        'sans': ['Noto Sans SC', 'sans-serif'],
+                        'serif': ['Noto Serif SC', 'serif'] 
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { 
+            font-family: 'Noto Sans SC', sans-serif; 
+            background-color: #FFF9F0; color: #44403C; font-size: 14px;
+            position: relative;
+        }
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E");
+            opacity: 0.03; pointer-events: none; z-index: 9999;
+        }
+        .card { background: #FEFDFB; border-radius: 0.75rem; border: 1px solid #F5E9D4; box-shadow: 0 4px 6px -1px rgba(120, 53, 15, 0.05); }
+        .btn-caramel { background: #D97706; color: #fff; transition: all 0.15s; font-weight: 500; }
+        .btn-caramel:hover { background: #B45309; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3); }
+        .btn-sage { background: #84CC16; color: #fff; transition: all 0.15s; font-weight: 500; }
+        .btn-sage:hover { background: #65A30D; }
+        
+        /* 黑胶唱片旋转动画 */
+        @keyframes spin-vinyl { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .vinyl-spin { animation: spin-vinyl 4s linear infinite; }
+
+        /* 同步状态呼吸点 */
+        @keyframes sync-pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+        .sync-dot { animation: sync-pulse 2s infinite; }
+
+        /* 时间轴样式 */
+        .timeline { position: relative; padding-left: 24px; }
+        .timeline::before { content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 2px; background: #F5E9D4; }
+        .timeline-item { position: relative; padding-bottom: 1.5rem; }
+        .timeline-dot { position: absolute; left: -20px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: #FEFDFB; border: 3px solid #D97706; z-index: 1; }
+        .timeline-dot.done { border-color: #84CC16; }
+        .timeline-dot.pending { border-color: #F59E0B; }
+
+        .tag { font-size: 0.65rem; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-weight: 500; border: 1px solid transparent; }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-thumb { background: #F5E9D4; border-radius: 3px; }
+    </style>
+</head>
+<body class="p-4 md:p-6">
+
+    <!-- 顶栏 -->
+    <header class="max-w-7xl mx-auto flex justify-between items-center mb-4 pb-4 border-b border-border-warm">
+        <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-lg bg-coffee/10 flex items-center justify-center text-coffee border border-coffee/20">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <h1 class="text-base font-bold text-coffee font-serif">家长陪伴看板</h1>
+                <p class="text-xs text-text-light">默默陪伴，静待花开。</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-5">
+            <div class="flex items-center space-x-1 text-[10px] text-sage border-r border-border-warm pr-5">
+                <span class="w-1.5 h-1.5 rounded-full bg-sage sync-dot"></span>
+                <span>与彤彤端实时同步中</span>
+            </div>
+            <div class="w-8 h-8 rounded-full bg-coffee/10 border border-coffee/20 flex items-center justify-center text-coffee font-medium text-xs cursor-pointer">妈</div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4">
+        
+        <!-- 左侧主区域 -->
+        <main class="lg:col-span-2 space-y-4">
+            
+            <!-- 实时状态透视卡 -->
+            <div class="card p-5 border-l-4 border-caramel bg-caramel-light/5">
+                <div class="flex items-center space-x-4">
+                    <!-- 黑胶唱片动画 -->
+                    <div class="relative w-16 h-16 flex-shrink-0 flex items-center justify-center">
+                        <div class="absolute inset-0 rounded-full bg-gray-900 vinyl-spin" style="background-image: repeating-radial-gradient(circle at center, #222 0px, #222 2px, #111 3px); border: 2px solid #333;"></div>
+                        <div class="absolute w-5 h-5 rounded-full bg-caramel border border-orange-200 flex items-center justify-center text-[8px] text-black font-bold">A</div>
+                        <div class="absolute top-0 right-1 w-1 h-8 bg-gray-600 origin-top transform rotate-12"></div>
+                        <div class="absolute top-0 right-0.5 w-2 h-2 rounded-full bg-gray-500"></div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="tag bg-caramel/10 text-caramel border-caramel/20">进行中</span>
+                            <span class="text-xs text-text-light">已专注 00:12:35</span>
+                        </div>
+                        <h3 class="text-base font-bold text-text-main font-serif">彤彤正在专注：预习初二数学《勾股定理》</h3>
+                        <p class="text-xs text-text-secondary mt-1">专注环境：咖啡馆白噪音 · 预计还需 17 分钟</p>
+                    </div>
+                    <button class="btn-sage px-3 py-1.5 rounded text-xs font-medium">不打扰</button>
+                </div>
+            </div>
+
+            <!-- 今日动态时间轴 -->
+            <div class="flex justify-between items-center px-1 pt-2">
+                <h3 class="text-sm font-medium text-coffee font-serif">今日动态时间轴</h3>
+                <span class="text-xs text-text-light">1月4日</span>
+            </div>
+
+            <div class="card p-5">
+                <div class="timeline">
+                    <!-- 动态 1: 提交作业待审核 -->
+                    <div class="timeline-item">
+                        <div class="timeline-dot pending"></div>
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="tag bg-orange-50 text-orange-600 border-orange-100">校内作业</span>
+                                <h4 class="text-sm font-medium text-text-main">提交了《寒假语文作业本 P10-P12》</h4>
+                            </div>
+                            <span class="text-xs text-text-light">10:05</span>
+                        </div>
+                        <div class="bg-bg-warm/50 p-3 rounded text-xs text-text-secondary leading-relaxed border-l border-orange-200 pl-3 italic font-serif mb-2">
+                            "文言文翻译《愚公移山》太磨人，'之'字用法太多。写完挺有成就感。"
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex space-x-2">
+                                <div class="relative w-10 h-10 rounded border border-caramel/30 overflow-hidden cursor-pointer group" title="点击查看作业大图">
+                                    <img src="https://placehold.co/100x100/F5E9D4/78350F?text=HW1" class="w-full h-full object-cover" alt="作业照片1">
+                                </div>
+                                <div class="relative w-10 h-10 rounded border border-caramel/30 overflow-hidden cursor-pointer group" title="点击查看作业大图">
+                                    <img src="https://placehold.co/100x100/F5E9D4/78350F?text=HW2" class="w-full h-full object-cover" alt="作业照片2">
+                                </div>
+                            </div>
+                            <button class="btn-caramel px-3 py-1 rounded text-xs font-medium flex items-center">
+                                前往审核
+                                <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 动态 2: 兑换请求 -->
+                    <div class="timeline-item">
+                        <div class="timeline-dot pending"></div>
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="tag bg-purple-50 text-purple-600 border-purple-100">积分兑换</span>
+                                <h4 class="text-sm font-medium text-text-main">请求兑换“周末看电影”</h4>
+                            </div>
+                            <span class="text-xs text-text-light">09:30</span>
+                        </div>
+                        <div class="flex justify-end items-center space-x-2 mt-2">
+                            <button class="text-xs px-3 py-1 rounded border border-border-warm text-text-secondary hover:bg-bg-warm/50">稍后再说</button>
+                            <button class="btn-sage px-3 py-1 rounded text-xs font-medium">同意兑换 (-50币)</button>
+                        </div>
+                    </div>
+
+                    <!-- 动态 3: 开始学习 -->
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center space-x-2">
+                                <span class="tag bg-caramel/10 text-caramel border-caramel/20">数学预习</span>
+                                <h4 class="text-sm font-medium text-text-light">开始了《勾股定理》的专注计时</h4>
+                            </div>
+                            <span class="text-xs text-text-light">09:15</span>
+                        </div>
+                    </div>
+
+                    <!-- 动态 4: 获得评价 -->
+                    <div class="timeline-item">
+                        <div class="timeline-dot done"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center space-x-2">
+                                <span class="tag bg-sage/10 text-sage border-sage/20">已完成</span>
+                                <h4 class="text-sm font-medium text-text-light">《复习初一生物细胞结构》获得 +15 流光币</h4>
+                            </div>
+                            <span class="text-xs text-text-light">昨日 22:10</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- 右侧侧边栏 -->
+        <aside class="space-y-4">
+            <!-- 今日数据概览 -->
+            <div class="card p-4 grid grid-cols-3 gap-2 text-center">
+                <div>
+                    <div class="text-xl font-bold text-caramel">2.5</div>
+                    <div class="text-[10px] text-text-light mt-1">专注时长</div>
+                </div>
+                <div class="border-l border-r border-border-warm">
+                    <div class="text-xl font-bold text-coffee">3<span class="text-xs font-normal text-text-light">/6</span></div>
+                    <div class="text-[10px] text-text-light mt-1">任务进度</div>
+                </div>
+                <div>
+                    <div class="text-xl font-bold text-orange-500">2</div>
+                    <div class="text-[10px] text-text-light mt-1">待办审核</div>
+                </div>
+            </div>
+
+            <!-- 待办审核列表 -->
+            <div class="card p-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-medium text-coffee font-serif">待办审核</h3>
+                    <span class="bg-orange-100 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">2</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="p-2.5 bg-bg-warm/40 rounded border border-border-warm">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="text-xs font-medium text-text-main">语文作业 P10-P12</h4>
+                            <span class="text-[10px] text-text-light">10:05</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex -space-x-2">
+                                <div class="w-6 h-6 rounded border border-white overflow-hidden bg-gray-100"><img src="https://placehold.co/50x50/F5E9D4/78350F?text=1" class="w-full h-full object-cover"></div>
+                                <div class="w-6 h-6 rounded border border-white overflow-hidden bg-gray-100"><img src="https://placehold.co/50x50/F5E9D4/78350F?text=2" class="w-full h-full object-cover"></div>
+                            </div>
+                            <button class="text-[10px] text-caramel hover:underline">去处理 ›</button>
+                        </div>
+                    </div>
+                    <div class="p-2.5 bg-bg-warm/40 rounded border border-border-warm">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="text-xs font-medium text-text-main">兑换：看电影</h4>
+                            <span class="text-[10px] text-text-light">09:30</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] text-purple-600 font-medium">消耗 50 流光币</span>
+                            <button class="text-[10px] text-caramel hover:underline">去处理 ›</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 一键鼓励 -->
+            <div class="card p-4">
+                <h3 class="text-sm font-medium text-coffee font-serif mb-3">一键传小纸条</h3>
+                <div class="space-y-2">
+                    <button class="w-full text-left p-2 bg-bg-warm/40 rounded border border-border-warm text-xs text-text-secondary hover:border-caramel hover:text-caramel transition-colors">
+                        💬 加油！妈妈看到你的努力了。
+                    </button>
+                    <button class="w-full text-left p-2 bg-bg-warm/40 rounded border border-border-warm text-xs text-text-secondary hover:border-caramel hover:text-caramel transition-colors">
+                        💬 专注得不错，注意劳逸结合哦。
+                    </button>
+                    <button class="w-full text-left p-2 bg-bg-warm/40 rounded border border-border-warm text-xs text-text-secondary hover:border-caramel hover:text-caramel transition-colors">
+                        💬 这个心得总结得很棒，继续保持！
+                    </button>
+                </div>
+            </div>
+
+            <!-- 阅读跟进 -->
+            <div class="card p-4 bg-gradient-to-br from-card-cream to-bg-warm border-caramel/30">
+                <h3 class="text-sm font-medium text-coffee font-serif mb-2">阅读跟进</h3>
+                <div class="flex items-center space-x-3 mb-2">
+                    <div class="w-8 h-10 bg-gradient-to-br from-caramel to-coffee rounded-sm flex-shrink-0"></div>
+                    <div class="flex-1">
+                        <h4 class="text-xs font-medium text-text-main font-serif">《骆驼祥子》</h4>
+                        <p class="text-[10px] text-text-light mt-0.5">老舍 · 15/24 章</p>
+                    </div>
+                </div>
+                <p class="text-[10px] text-text-secondary mt-2">彤彤昨日摘录了一段关于“雨”的描写，感悟很深刻，建议抽空给她回个信。</p>
+                <button class="text-xs text-caramel font-medium hover:underline mt-2">前往手账局 ›</button>
+            </div>
+        </aside>
+    </div>
+
+</body>
+</html>
