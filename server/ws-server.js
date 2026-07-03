@@ -4,16 +4,15 @@
  * AuraLog WebSocket 实时同步服务器
  *
  * 运行方式：node server/ws-server.js
- * 端口：3001（可通过 WS_PORT 环境变量修改）
+ * 端口：3011（可通过 WS_PORT 环境变量修改）
  *
- * 与 Next.js 开发服务器同时启动：
- *   npm run dev    # Next.js on port 3000
- *   node server/ws-server.js  # WS on port 3001
+ * 生产部署（与 PM2 配合）：
+ *   pm2 start server/ws-server.js --name auralog-ws --env WS_PORT=3011
  */
 
 const { WebSocketServer } = require("ws");
 
-const PORT = parseInt(process.env.WS_PORT || "3001");
+const PORT = parseInt(process.env.WS_PORT || "3011");
 const wss = new WebSocketServer({ port: PORT });
 const clients = new Set();
 
@@ -73,7 +72,7 @@ process.on("SIGINT", () => {
 });
 
 // 广播函数 — 可通过 HTTP 接口触发
-// 使用方式: curl http://localhost:3001/trigger -d '{"type":"TASK_GRADED","payload":{...}}'
+// 使用方式: curl http://localhost:3011/trigger -d '{"type":"TASK_GRADED","payload":{...}}'
 const http = require("http");
 const httpServer = http.createServer((req, res) => {
   if (req.method === "POST" && req.url === "/trigger") {

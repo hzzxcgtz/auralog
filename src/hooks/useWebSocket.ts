@@ -48,7 +48,7 @@ export function useWebSocket(handler?: MessageHandler) {
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const host = process.env.NEXT_PUBLIC_WS_HOST || window.location.hostname;
-    const port = process.env.NEXT_PUBLIC_WS_PORT || "3001";
+    const port = process.env.NEXT_PUBLIC_WS_PORT || "3011";
     const url = `${protocol}//${host}:${port}`;
 
     try {

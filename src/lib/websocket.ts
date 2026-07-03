@@ -6,7 +6,7 @@ interface WSMessage {
   timestamp: number;
 }
 
-const WS_PORT = parseInt(process.env.WS_PORT || "3001");
+const WS_PORT = parseInt(process.env.WS_PORT || "3011");
 let wss: WebSocketServer | null = null;
 
 // 连接管理器

@@ -16,8 +16,8 @@
 # 环境变量（可自定义）:
 #   APP_DIR=~/auralog        # 应用根目录（默认 ~/auralog）
 #   DATA_DIR=/var/data/auralog # 数据目录（SQLite 数据库、上传文件存放，默认 APP_DIR/data）
-#   PORT=3000                  # Next.js 端口
-#   WS_PORT=3001               # WebSocket 端口
+#   PORT=3010                  # Next.js 端口（默认）
+#   WS_PORT=3011               # WebSocket 端口（默认）
 #   NODE_ENV=production        # 运行环境
 #
 
@@ -115,8 +115,8 @@ setup_env() {
 # AuraLog 环境配置（由 deploy.sh 自动生成）
 DATABASE_URL="file:${DB_PATH}?journal_mode=WAL"
 AUTH_SECRET="${new_secret}"
-AUTH_URL="http://localhost:${PORT:-3000}"
-WS_PORT="${WS_PORT:-3001}"
+AUTH_URL="http://localhost:${PORT:-3010}"
+WS_PORT="${WS_PORT:-3011}"
 NODE_ENV="${NODE_ENV:-production}"
 ENVEOF
     log ".env 已创建 (AUTH_SECRET 已自动生成)"
@@ -129,7 +129,7 @@ ENVEOF
     fi
     # 确保 WS_PORT 存在
     if ! grep -q '^WS_PORT=' "$ENV_FILE" 2>/dev/null; then
-      echo "WS_PORT=${WS_PORT:-3001}" >> "$ENV_FILE"
+      echo "WS_PORT=${WS_PORT:-3011}" >> "$ENV_FILE"
     fi
     log ".env 已更新"
   fi
@@ -217,17 +217,17 @@ manage_processes() {
   pm2 delete "$PM2_WS" 2>/dev/null || true
 
   # 启动 Next.js
-  info "启动 Next.js (端口 ${PORT:-3000})..."
+  info "启动 Next.js (端口 ${PORT:-3010})..."
   cd "$APP_DIR"
-  PORT="${PORT:-3000}" pm2 start "npx next start -p ${PORT:-3000}" \
+  PORT="${PORT:-3010}" pm2 start "npx next start -p ${PORT:-3010}" \
     --name "$PM2_NEXT" \
     --env NODE_ENV=production 2>&1 | tail -1
 
   # 启动 WebSocket 服务
-  info "启动 WebSocket 服务 (端口 ${WS_PORT:-3001})..."
+  info "启动 WebSocket 服务 (端口 ${WS_PORT:-3011})..."
   pm2 start "${APP_DIR}/server/ws-server.js" \
     --name "$PM2_WS" \
-    --env WS_PORT="${WS_PORT:-3001}" 2>&1 | tail -1
+    --env WS_PORT="${WS_PORT:-3011}" 2>&1 | tail -1
 
   # 保存 PM2 进程列表（重启后自动恢复）
   pm2 save 2>/dev/null || true
@@ -241,8 +241,8 @@ print_summary() {
   echo "╔══════════════════════════════════════════════════╗"
   echo "║        AuraLog（纸间流光）部署完成 🎉           ║"
   echo "╠══════════════════════════════════════════════════╣"
-  echo "║  应用:     http://localhost:${PORT:-3000}           ║"
-  echo "║  WebSocket: ws://localhost:${WS_PORT:-3001}            ║"
+  echo "║  应用:     http://localhost:${PORT:-3010}           ║"
+  echo "║  WebSocket: ws://localhost:${WS_PORT:-3011}            ║"
   echo "║  数据库:   ${DB_PATH}  ║"
   echo "║  上传目录: ${UPLOAD_DIR} ║"
   echo "╠══════════════════════════════════════════════════╣"
