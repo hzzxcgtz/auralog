@@ -219,13 +219,15 @@ manage_processes() {
   # 启动 Next.js
   info "启动 Next.js (端口 ${PORT:-3000})..."
   cd "$APP_DIR"
-  PORT="${PORT:-3000}" pm2 start --name "$PM2_NEXT" \
-    --interpreter bash -- \
-    -c "cd ${APP_DIR} && NODE_ENV=production PORT=${PORT:-3000} npx next start -p ${PORT:-3000}" 2>&1 | tail -1
+  PORT="${PORT:-3000}" pm2 start "npx next start -p ${PORT:-3000}" \
+    --name "$PM2_NEXT" \
+    --env NODE_ENV=production 2>&1 | tail -1
 
   # 启动 WebSocket 服务
   info "启动 WebSocket 服务 (端口 ${WS_PORT:-3001})..."
-  pm2 start --name "$PM2_WS" --interpreter node -- "${APP_DIR}/server/ws-server.js" 2>&1 | tail -1
+  pm2 start "${APP_DIR}/server/ws-server.js" \
+    --name "$PM2_WS" \
+    --env WS_PORT="${WS_PORT:-3001}" 2>&1 | tail -1
 
   # 保存 PM2 进程列表（重启后自动恢复）
   pm2 save 2>/dev/null || true
